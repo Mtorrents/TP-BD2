@@ -1,0 +1,241 @@
+//CONSULTA 1
+db.Ventas.aggregate(
+    { 
+      $unwind: "$listaDetalleVentas" 
+    },
+    {
+        $match: {
+            "fechaVenta": { "$gte": ISODate("2020-04-10T03:00:00Z")  , "$lte": ISODate("2020-05-10T03:00:00Z") }  
+         }
+    },
+    {
+        $group: {
+            _id: {
+                puntoVenta: "$sucursalAsignada.puntoVenta",
+                idSucursal: "$sucursalAsignada.idSucursal"
+            },
+            
+            totalVenta: {"$sum": "$listaDetalleVentas.total"}
+         }        
+    },
+    {
+        $project: {
+            _id: 0,
+            idSucursal: "$_id.idSucursal",
+            puntoVenta: "$_id.puntoVenta",
+            totalVenta: 1
+        }
+    }
+)
+//CONSULTA 2
+db.Ventas.aggregate([
+  {
+    $match: {
+      fechaVenta: {
+        $gte: ISODate("2020-04-09T03:00:00Z"),
+        $lte: ISODate("2020-05-26T03:00:00Z")
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        sucursal: "$sucursalAsignada.idSucursal",
+        detalleVenta: "$listaDetalleVentas",
+        totales: {
+          $sum: "$listaDetalleVentas.total"
+        },
+        obraSocialCobrador: "$empleadoCobrador.obraSocial.obraSocial",
+        obrasocialAtendedor: "$emepladoAtendedor.obraSocial.obraSocial"
+      }
+    }
+  }
+]).pretty()
+//CONSULTA 3
+db.Ventas.aggregate([
+  {
+    $match: {
+      fechaVenta: {
+        $gte: ISODate("2020-04-09T03:00:00Z"),
+        $lte: ISODate("2020-05-26T03:00:00Z")
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        sucursal: "$sucursalAsignada.idSucursal",
+        detalleVenta: "$listaDetalleVentas",
+        medioDePago: "$formaPago.formaPago",
+        totalVenta: {
+          $sum: "$listaDetalleVentas.total"
+        }
+      }
+    }
+  }
+]).pretty()
+//CONSULTA 4
+db.Ventas.aggregate(
+    { 
+      $unwind: "$listaDetalleVentas"
+    },
+    {
+        $match: {
+            "fechaVenta": { "$gte": ISODate("2020-04-05T03:00:00Z")  , "$lte": ISODate("2020-05-11T03:00:00Z") }  
+         }
+    },
+    { 
+      $group: {
+        _id: {
+            //codigoProducto:"$listaDetalleVentas.producto.codigoProducto" ,
+            idTipoProducto: "$listaDetalleVentas.producto.tipoProducto.idTipoProducto",
+            producto: "$listaDetalleVentas.producto.tipoProducto.producto",
+            idSucursal: "$sucursalAsignada.idSucursal"
+        },
+        ventaTotalProducto: {"$sum": "$listaDetalleVentas.total"}
+      }
+    },
+    {
+        $project: {
+            _id: 0,
+            idTipoProducto: "$_id.idTipoProducto",
+            producto: "$_id.producto",
+            idSucursal: "$_id.idSucursal",
+            ventaTotalProducto: 1
+        }
+    }
+)
+//CONSULTA 5
+db.Ventas.aggregate([
+  {
+    $match: {
+      fechaVenta: {
+        $gte: ISODate("2020-04-09T03:00:00Z"),
+        $lte: ISODate("2020-05-11T03:00:00Z")
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        sucursal: "$sucursalAsignada.sucursal",
+        producto: "$listaDetalleVentas.producto",
+        ventaTotalProducto: {
+          $sum: "$listaDetalleVentas.total"
+        }
+      }
+    }
+  },
+  {
+    $sort: {
+      ventaTotalProducto: -1
+    }
+  }
+]).pretty();
+// CONSULTA 6
+db.Ventas.aggregate([
+  {
+    $match: {
+      fechaVenta: {
+        $gte: ISODate("2020-04-09T03:00:00Z"),
+        $lte: ISODate("2020-05-11T03:00:00Z")
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        sucursal: "$sucursalAsignada.sucursal",
+        producto: "$listaDetalleVentas.producto",
+        ventaTotalProducto: {
+          $sum: "$listaDetalleVentas.total"
+        },
+        cantidadVendida: "$listaDetalleVentas.cantidad"
+      }
+    }
+  },
+  {
+    $sort: {
+      ventaTotalProducto: -1
+    }
+  }
+]).pretty();
+//CONSULTA 7
+db.Ventas.aggregate({
+  $unwind: "$listaDetalleVentas"
+},
+{
+  $match: {
+    "fechaVenta": {
+      "$gte": ISODate("2020-04-10T03:00:00Z"),
+      "$lte": ISODate("2020-04-20T03:00:00Z")
+    }
+  }
+},
+{
+  $group: {
+    _id: {
+      dni: "$cliente.dni",
+      apellido: "$cliente.apellido",
+      nombre: "$cliente.nombre"
+    },
+    monto: {
+      $sum: "$listaDetalleVentas.total"
+    }
+  }
+},
+{
+  $project: {
+    _id: 0,
+    dni: "$_id.dni",
+    apellido: "$_id.apellido",
+    nombre: "$_id.nombre",
+    monto: 1
+  }
+},
+{
+  $sort: {
+    monto: -1
+  }
+})
+
+
+//CONSULTA 8
+db.Ventas.aggregate({
+  $unwind: "$listaDetalleVentas"
+},
+{
+  $match: {
+    "fechaVenta": {
+      "$gte": ISODate("2020-04-10T03:00:00Z"),
+      "$lte": ISODate("2020-04-20T03:00:00Z")
+    }
+  }
+},
+{
+  $group: {
+    _id: {
+      dni: "$cliente.dni",
+      apellido: "$cliente.apellido",
+      nombre: "$cliente.nombre"
+    },
+    cantidadVendida: {
+      $sum: "$listaDetalleVentas.cantidad"
+    }
+  }
+},
+{
+  $project: {
+    _id: 0,
+    dni: "$_id.dni",
+    apellido: "$_id.apellido",
+    nombre: "$_id.nombre",
+    cantidadVendida: 1
+  }
+},
+{
+  $sort: {
+    cantidadVendida: -1
+  }
+})
+
